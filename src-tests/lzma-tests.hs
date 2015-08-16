@@ -2,24 +2,24 @@
 
 module Main (main) where
 
-import Data.Monoid
+import           Control.Applicative
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import           Data.List
-import           Data.Ord
+import           Data.Monoid
+import           Prelude
 
 import           Test.Tasty
 import           Test.Tasty.QuickCheck as QC
 import           Test.Tasty.HUnit
 
 import           Codec.Compression.Lzma as Lzma
-import Control.Applicative
-
-import Debug.Trace
 
 main :: IO ()
 main = defaultMain tests
 
+-- this is supposed to be equivalent to 'id'
+codecompress :: BL.ByteString -> BL.ByteString
 codecompress = decompress . compress
 
 newtype ZeroBS = ZeroBS BL.ByteString
@@ -56,7 +56,7 @@ instance Arbitrary RandBL where
 instance Arbitrary RandBLSm where
     arbitrary = do
         n <- choose (0,1024)
-        RandBLSm . BL.fromStrict <$> randBS n
+        RandBLSm . BL.fromChunks . (:[]) <$> randBS n
 
 tests :: TestTree
 tests = testGroup "ByteString API" [unitTests, properties]
