@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 -- |
 -- Module      : Codec.Compression.Lzma
 -- Copyright   : © 2015 Herbert Valerio Riedel
@@ -173,7 +175,7 @@ compressIO parms = (stToIO $ newEncodeLzmaStream parms) >>= either throwIO go
 
         goFlush, goFinish :: IO (CompressStream IO)
         goFlush  = goSync LzmaSyncFlush (return inputRequired)
-        goFinish = goSync LzmaFinish (return CompressStreamEnd)
+        goFinish = goSync LzmaFinish retStreamEnd
 
         -- drain encoder till LzmaRetStreamEnd is reported
         goSync :: LzmaAction -> IO (CompressStream IO) -> IO (CompressStream IO)
@@ -190,6 +192,10 @@ compressIO parms = (stToIO $ newEncodeLzmaStream parms) >>= either throwIO go
                         | BS.null obuf -> next
                         | otherwise    -> return (CompressOutputAvailable obuf next)
                     _ -> throwIO rc
+
+        retStreamEnd = do
+            !() <- stToIO (endLzmaStream ls)
+            return CompressStreamEnd
 
 -- | Incremental compression in the lazy 'ST' monad.
 compressST :: CompressParams -> ST s (CompressStream (ST s))
@@ -220,7 +226,7 @@ compressST parms = strictToLazyST (newEncodeLzmaStream parms) >>= either throw g
 
         goFlush, goFinish :: ST s (CompressStream (ST s))
         goFlush  = goSync LzmaSyncFlush (return inputRequired)
-        goFinish = goSync LzmaFinish (return CompressStreamEnd)
+        goFinish = goSync LzmaFinish retStreamEnd
 
         -- drain encoder till LzmaRetStreamEnd is reported
         goSync :: LzmaAction -> ST s (CompressStream (ST s)) -> ST s (CompressStream (ST s))
@@ -237,6 +243,10 @@ compressST parms = strictToLazyST (newEncodeLzmaStream parms) >>= either throw g
                         | BS.null obuf -> next
                         | otherwise    -> return (CompressOutputAvailable obuf next)
                     _ -> throw rc
+
+        retStreamEnd = do
+            !() <- strictToLazyST (endLzmaStream ls)
+            return CompressStreamEnd
 
 --------------------------------------------------------------------------------
 
@@ -275,12 +285,11 @@ decompressIO parms = stToIO (newDecodeLzmaStream parms) >>= either (return . Dec
                                             (withChunk goDrain goInput chunk'))
 
                 LzmaRetStreamEnd
-                  | BS.null obuf -> return (DecompressStreamEnd chunk')
+                  | BS.null obuf -> retStreamEnd chunk'
                   | otherwise    -> return (DecompressOutputAvailable obuf
-                                            (return (DecompressStreamEnd chunk')))
+                                            (retStreamEnd chunk'))
 
                 _ -> return (DecompressStreamError rc)
-
 
         goDrain, goFinish :: IO (DecompressStream IO)
         goDrain  = goSync LzmaRun (return inputRequired)
@@ -302,8 +311,11 @@ decompressIO parms = stToIO (newDecodeLzmaStream parms) >>= either (return . Dec
 
                   _ -> return (DecompressStreamError rc)
 
-            eof0 = return $ DecompressStreamEnd BS.empty
+            eof0 = retStreamEnd BS.empty
 
+        retStreamEnd chunk' = do
+            !() <- stToIO (endLzmaStream ls)
+            return (DecompressStreamEnd chunk')
 
 -- | Incremental decompression in the lazy 'ST' monad.
 decompressST :: DecompressParams -> ST s (DecompressStream (ST s))
@@ -334,9 +346,9 @@ decompressST parms = strictToLazyST (newDecodeLzmaStream parms) >>= either (retu
                                             (withChunk goDrain goInput chunk'))
 
                 LzmaRetStreamEnd
-                  | BS.null obuf -> return (DecompressStreamEnd chunk')
+                  | BS.null obuf -> retStreamEnd chunk'
                   | otherwise    -> return (DecompressOutputAvailable obuf
-                                            (return (DecompressStreamEnd chunk')))
+                                            (retStreamEnd chunk'))
 
                 _ -> return (DecompressStreamError rc)
 
@@ -361,8 +373,11 @@ decompressST parms = strictToLazyST (newDecodeLzmaStream parms) >>= either (retu
 
                   _ -> return (DecompressStreamError rc)
 
-            eof0 = return $ DecompressStreamEnd BS.empty
+            eof0 = retStreamEnd BS.empty
 
+        retStreamEnd chunk' = do
+            !() <- strictToLazyST (endLzmaStream ls)
+            return (DecompressStreamEnd chunk')
 
 -- | Small 'maybe'-ish helper distinguishing between empty and
 -- non-empty 'ByteString's
