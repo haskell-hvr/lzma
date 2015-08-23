@@ -24,6 +24,7 @@ module LibLzma
     , defaultCompressParams
 
     , runLzmaStream
+    , endLzmaStream
     , LzmaAction(..)
     ) where
 
@@ -226,6 +227,13 @@ runLzmaStream (LS ls) ibs action0 buflen
         LzmaSyncFlush -> #const LZMA_SYNC_FLUSH
         LzmaFullFlush -> #const LZMA_FULL_FLUSH
         LzmaFinish    -> #const LZMA_FINISH
+
+
+-- | Force immediate finalization of 'ForeignPtr' associated with
+-- 'LzmaStream'.  This triggers a call to @lzma_end()@, therefore it's
+-- a programming error to call 'runLzmaStream' afterwards.
+endLzmaStream :: LzmaStream -> ST s ()
+endLzmaStream (LS ls) = unsafeIOToST $ finalizeForeignPtr ls
 
 ----------------------------------------------------------------------------
 -- trivial helper wrappers defined in ../cbits/lzma_wrapper.c
