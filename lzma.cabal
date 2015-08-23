@@ -1,5 +1,5 @@
 name:                lzma
-version:             0.0.0.1
+version:             0.0.0.2
 synopsis:            LZMA/XZ compression and decompression
 homepage:            https://github.com/hvr/lzma
 bug-reports:         https://github.com/hvr/lzma/issues
