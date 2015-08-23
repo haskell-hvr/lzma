@@ -69,9 +69,8 @@ tests = testGroup "ByteString API" [unitTests, properties]
         , testCase "decode-sample" $ decompress samplexz @?= sampleref
         , testCase "decode-sample2" $ decompress (singletonChunked samplexz) @?= sampleref
         , testCase "encode-sample" $ codecompress sampleref @?= sampleref
-        , testCase "encode-empty^50" $ (iterate decompress (iterate compress "" !! 50) !! 50) @?= ""
+        , testCase "encode-empty^50" $ (iterate decompress (iterate (compressWith lowProf) "" !! 50) !! 50) @?= ""
         , testCase "encode-10MiB-zeros" $ let z = BL.replicate (10*1024*1024) 0 in codecompress z @?= z
-
         ]
 
     properties = testGroup "properties"
@@ -84,6 +83,8 @@ tests = testGroup "ByteString API" [unitTests, properties]
         , QC.testProperty "decompress . (compress a <> compress b) === a <> b" $
           \(RandBLSm a) (RandBLSm b) -> decompress (compress a `mappend` compress b) == a `mappend` b
         ]
+
+    lowProf = defaultCompressParams { compressLevel = CompressionLevel0 }
 
 nullxz :: BL.ByteString
 nullxz = BL.pack [253,55,122,88,90,0,0,4,230,214,180,70,0,0,0,0,28,223,68,33,31,182,243,125,1,0,0,0,0,4,89,90]
