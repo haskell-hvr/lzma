@@ -1,5 +1,8 @@
+cabal-version:       >=1.10
 name:                lzma
 version:             0.0.0.3
+x-revision:          2
+
 synopsis:            LZMA/XZ compression and decompression
 homepage:            https://github.com/hvr/lzma
 bug-reports:         https://github.com/hvr/lzma/issues
@@ -11,8 +14,7 @@ copyright:           (c) 2015, Herbert Valerio Riedel
 stability:           experimental
 category:            Codec, Compression
 build-type:          Simple
-cabal-version:       >=1.10
-tested-with:         GHC ==7.4.2, GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1, GHC ==8.0.2, GHC ==8.2.2
+tested-with:         GHC ==7.4.2, GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1, GHC ==8.0.2, GHC ==8.2.2, GHC ==8.4.1
 description:
     This package provides a pure interface for compressing and
     decompressing
@@ -27,6 +29,8 @@ description:
       * </package/lzma-streams lzma-streams> (for </package/io-streams io-streams>)
     .
       * </package/pipes-lzma pipes-lzma> (for </package/pipes pipes>)
+    .
+      * </package/lzma-conduit lzma-conduit> (for </package/conduit conduit>)
     .
 
 extra-source-files:
@@ -44,7 +48,7 @@ library
   exposed-modules:     Codec.Compression.Lzma
   other-modules:       LibLzma
 
-  build-depends:       base       >=4.5    && <4.11
+  build-depends:       base       >=4.5    && <4.12
                      , bytestring >=0.9.2  && <0.11
 
   if os(windows)
