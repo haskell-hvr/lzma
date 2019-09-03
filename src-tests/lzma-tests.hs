@@ -1,10 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main (main) where
 
 import           Control.Applicative
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL8
 import           Data.List
 import           Data.Monoid
 import           Prelude
@@ -64,12 +63,12 @@ tests = testGroup "ByteString API" [unitTests, properties]
     unitTests  = testGroup "testcases"
         [ testCase "decode-empty" $ decompress nullxz @?= BL.empty
         , testCase "encode-empty" $ codecompress BL.empty @?= BL.empty
-        , testCase "encode-hello" $ codecompress "hello" @?= "hello"
-        , testCase "encode-hello2" $ codecompress (singletonChunked "hello") @?= "hello"
+        , testCase "encode-hello" $ codecompress (BL8.pack "hello") @?= BL8.pack "hello"
+        , testCase "encode-hello2" $ codecompress (singletonChunked $ BL8.pack "hello") @?= BL8.pack "hello"
         , testCase "decode-sample" $ decompress samplexz @?= sampleref
         , testCase "decode-sample2" $ decompress (singletonChunked samplexz) @?= sampleref
         , testCase "encode-sample" $ codecompress sampleref @?= sampleref
-        , testCase "encode-empty^50" $ (iterate decompress (iterate (compressWith lowProf) "" !! 50) !! 50) @?= ""
+        , testCase "encode-empty^50" $ (iterate decompress (iterate (compressWith lowProf) (BL8.pack "") !! 50) !! 50) @?= BL8.pack ""
         , testCase "encode-10MiB-zeros" $ let z = BL.replicate (10*1024*1024) 0 in codecompress z @?= z
         ]
 
@@ -96,4 +95,4 @@ singletonChunked :: BL.ByteString -> BL.ByteString
 singletonChunked = BL.fromChunks . map BS.singleton . BL.unpack
 
 sampleref :: BL.ByteString
-sampleref = BL.concat (intersperse " " $ replicate 11 "This sentence occurs multiple times.")
+sampleref = BL.concat (intersperse (BL8.pack " ") $ replicate 11 $ BL8.pack "This sentence occurs multiple times.")
