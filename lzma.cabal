@@ -1,4 +1,4 @@
-cabal-version:       >=1.10
+cabal-version:       2.2
 name:                lzma
 version:             0.0.0.3
 x-revision:          5
@@ -6,7 +6,7 @@ x-revision:          5
 synopsis:            LZMA/XZ compression and decompression
 homepage:            https://github.com/hvr/lzma
 bug-reports:         https://github.com/hvr/lzma/issues
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Herbert Valerio Riedel
 maintainer:          hvr@gnu.org
@@ -53,6 +53,8 @@ library
 
   if os(windows)
     build-depends:     lzma-clib
+  elif os(darwin)
+    build-depends:     lzma-clib >= 5.2.2.1
   else
     includes:          lzma.h
     extra-libraries:   lzma
