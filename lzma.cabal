@@ -40,6 +40,11 @@ source-repository head
   type:     git
   location: https://github.com/hvr/lzma.git
 
+flag static
+  default:     False
+  manual:      True
+  description: Use the bundled sources (this is default for windows and darwin)
+
 library
   default-language:    Haskell2010
   other-extensions:    BangPatterns, RecordWildCards, DeriveDataTypeable
@@ -51,13 +56,16 @@ library
   build-depends:       base       >=4.5    && <4.15
                      , bytestring >=0.9.2  && <0.11
 
-  if os(windows)
-    build-depends:     lzma-clib
-  elif os(darwin)
+  if flag(static)
     build-depends:     lzma-clib >= 5.2.2.1
   else
-    includes:          lzma.h
-    extra-libraries:   lzma
+    if os(windows)
+      build-depends:     lzma-clib
+    elif os(darwin)
+      build-depends:     lzma-clib >= 5.2.2.1
+    else
+      includes:          lzma.h
+      extra-libraries:   lzma
 
   c-sources:           cbits/lzma_wrapper.c
 
