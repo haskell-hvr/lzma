@@ -147,6 +147,7 @@ data CompressParams = CompressParams
     , compressLevelExtreme   :: !Bool  -- ^ 'CompressParams' field: Enable slower variant of the
                                        -- 'lzmaCompLevel' preset, see @xz(1)@
                                        -- man-page for details.
+    , compressThreads        :: !Int -- ^ Number of threads to use
     } deriving (Eq,Show)
 
 -- | The default set of parameters for compression. This is typically
@@ -158,6 +159,7 @@ defaultCompressParams = CompressParams {..}
     compressIntegrityCheck = IntegrityCheckCrc64
     compressLevel          = CompressionLevel6
     compressLevelExtreme   = False
+    compressThreads        = 1
 
 newDecodeLzmaStream :: DecompressParams -> ST s (Either LzmaRet LzmaStream)
 newDecodeLzmaStream (DecompressParams {..}) = unsafeIOToST $ do
@@ -180,7 +182,7 @@ newEncodeLzmaStream :: CompressParams -> ST s (Either LzmaRet LzmaStream)
 newEncodeLzmaStream (CompressParams {..}) = unsafeIOToST $ do
     fp <- mallocForeignPtrBytes (#size lzma_stream)
     addForeignPtrFinalizer c_hs_lzma_done_funptr fp
-    rc <- withForeignPtr fp (\ptr -> c_hs_lzma_init_encoder ptr preset check)
+    rc <- withForeignPtr fp (\ptr -> c_hs_lzma_init_encoder ptr preset check compressThreads)
     rc' <- maybe (fail "newDecodeLzmaStream: invalid return code") pure $ toLzmaRet rc
 
     return $ case rc' of
@@ -242,7 +244,7 @@ foreign import ccall "hs_lzma_init_decoder"
     c_hs_lzma_init_decoder :: Ptr LzmaStream -> Bool -> Word64 -> Word32 -> IO Int
 
 foreign import ccall "hs_lzma_init_encoder"
-    c_hs_lzma_init_encoder :: Ptr LzmaStream -> Word32 -> Int -> IO Int
+    c_hs_lzma_init_encoder :: Ptr LzmaStream -> Word32 -> Int -> Int -> IO Int
 
 foreign import ccall "hs_lzma_run"
     c_hs_lzma_run :: Ptr LzmaStream -> Int -> Ptr Word8 -> Int -> Ptr Word8 -> Int -> IO Int

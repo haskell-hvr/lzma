@@ -25,13 +25,22 @@ hs_lzma_init_decoder(lzma_stream *ls, HsBool autolzma, uint64_t memlimit, uint32
 }
 
 HsInt
-hs_lzma_init_encoder(lzma_stream *ls, uint32_t preset, HsInt check)
+hs_lzma_init_encoder(lzma_stream *ls, uint32_t preset, HsInt check, HsInt threads)
 {
   /* recommended super-portable initialization */
   const lzma_stream ls_init = LZMA_STREAM_INIT;
   *ls = ls_init;
 
-  const lzma_ret ret = lzma_easy_encoder(ls, preset, check);
+  lzma_mt mt = {
+    .threads = threads,
+    // Use the default preset (6) for LZMA2.
+    // To use a preset, filters must be set to NULL.
+    .preset = preset,
+    // Use CRC64 for integrity checking. See also
+    // 01_compress_easy.c about choosing the integrity check.
+    .check = check,
+  };
+  const lzma_ret ret = lzma_stream_encoder_mt(ls, &mt);
 
   return ret;
 }
