@@ -1,6 +1,6 @@
 cabal-version:       >=1.10
 name:                lzma
-version:             0.0.0.3
+version:             0.0.0.4
 x-revision:          6
 
 synopsis:            LZMA/XZ compression and decompression
