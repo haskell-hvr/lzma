@@ -21,6 +21,9 @@ main = defaultMain tests
 codecompress :: BL.ByteString -> BL.ByteString
 codecompress = decompress . compress
 
+codecompressMultiCore :: BL.ByteString -> BL.ByteString
+codecompressMultiCore = decompress . compressWith defaultCompressParams { compressThreads = 4 }
+
 newtype ZeroBS = ZeroBS BL.ByteString
 
 instance Show ZeroBS where
@@ -70,6 +73,7 @@ tests = testGroup "ByteString API" [unitTests, properties]
         , testCase "encode-sample" $ codecompress sampleref @?= sampleref
         , testCase "encode-empty^50" $ (iterate decompress (iterate (compressWith lowProf) (BL8.pack "") !! 50) !! 50) @?= BL8.pack ""
         , testCase "encode-10MiB-zeros" $ let z = BL.replicate (10*1024*1024) 0 in codecompress z @?= z
+        , testCase "encode-10MiB-zeros-multicore" $ let z = BL.replicate (10*1024*1024) 0 in codecompressMultiCore z @?= z
         ]
 
     properties = testGroup "properties"
@@ -78,6 +82,9 @@ tests = testGroup "ByteString API" [unitTests, properties]
 
         , QC.testProperty "decompress . compress === id (chunked)" $
           \(RandBL bs) -> codecompress bs == bs
+
+        , QC.testProperty "decompress . compress (multi-core) === id" $
+          \(RandBL bs) -> codecompressMultiCore bs == bs
 
         , QC.testProperty "decompress . (compress a <> compress b) === a <> b" $
           \(RandBLSm a) (RandBLSm b) -> decompress (compress a `mappend` compress b) == a `mappend` b
