@@ -89,11 +89,11 @@ decompressWith parms input = runST (decompress' input)
       where
         loop BSL.Empty  (DecompressStreamEnd rest)
           | BS.null rest = return BSL.Empty
-          | otherwise = fail "Codec.Compression.Lzma.decompressWith: trailing data"
+          | otherwise = error "Codec.Compression.Lzma.decompressWith: trailing data"
         loop (BSL.Chunk _ _) (DecompressStreamEnd _) =
-            fail "Codec.Compression.Lzma.decompressWith: trailing data"
+            error "Codec.Compression.Lzma.decompressWith: trailing data"
         loop _ (DecompressStreamError e) =
-            fail ("Codec.Compression.Lzma.decompressWith: decoding error " ++ show e)
+            error ("Codec.Compression.Lzma.decompressWith: decoding error " ++ show e)
         loop BSL.Empty (DecompressInputRequired supply) =
             loop BSL.Empty =<< supply BS.empty
         loop (BSL.Chunk c bs') (DecompressInputRequired supply) =
@@ -124,7 +124,7 @@ compressWith parms input = runST (compress' input)
         loop BSL.Empty  CompressStreamEnd =
             return BSL.Empty
         loop (BSL.Chunk _ _) CompressStreamEnd =
-            fail "Codec.Compression.Lzma.compressWith: the impossible happened"
+            error "Codec.Compression.Lzma.compressWith: the impossible happened"
         loop BSL.Empty (CompressInputRequired _ supply) =
             loop BSL.Empty =<< supply BS.empty
         loop (BSL.Chunk c bs') (CompressInputRequired _ supply) =
@@ -223,7 +223,7 @@ compressST parms = strictToLazyST (newEncodeLzmaStream parms) >>=
                 LzmaRetOK
                   | BS.null obuf -> do
                       unless (used > 0) $
-                          fail "compressST: input chunk not consumed"
+                          error "compressST: input chunk not consumed"
                       withChunk (return inputRequired) goInput chunk'
                   | otherwise    -> return (CompressOutputAvailable obuf
                                             (withChunk (return inputRequired) goInput chunk'))
@@ -236,15 +236,16 @@ compressST parms = strictToLazyST (newEncodeLzmaStream parms) >>=
 
         -- drain encoder till LzmaRetStreamEnd is reported
         goSync :: LzmaAction -> ST s (CompressStream (ST s)) -> ST s (CompressStream (ST s))
-        goSync LzmaRun _ = fail "compressST: goSync called with invalid argument"
+        goSync LzmaRun _ = error "compressST: goSync called with invalid argument"
         goSync action next = goSync'
           where
             goSync' = do
-                (rc, 0, obuf) <- strictToLazyST (noDuplicateST >>
+                (rc, n, obuf) <- strictToLazyST (noDuplicateST >>
                                                  runLzmaStream ls BS.empty action bUFSIZ)
+                when (n /= 0) $ error "compressST: n was not zero"
                 case rc of
                     LzmaRetOK
-                        | BS.null obuf -> fail ("compressIO: empty output chunk during " ++ show action)
+                        | BS.null obuf -> error ("compressIO: empty output chunk during " ++ show action)
                         | otherwise    -> return (CompressOutputAvailable obuf goSync')
                     LzmaRetStreamEnd
                         | BS.null obuf -> next
@@ -349,7 +350,7 @@ decompressST parms = strictToLazyST (newDecodeLzmaStream parms) >>=
                 LzmaRetOK
                   | BS.null obuf -> do
                       unless (used > 0) $
-                          fail "decompressST: input chunk not consumed"
+                          error "decompressST: input chunk not consumed"
                       withChunk (return inputRequired) goInput chunk'
                   | otherwise    -> return (DecompressOutputAvailable obuf
                                             (withChunk goDrain goInput chunk'))
@@ -370,8 +371,9 @@ decompressST parms = strictToLazyST (newDecodeLzmaStream parms) >>=
         goSync action next = goSync'
           where
             goSync' = do
-                (rc, 0, obuf) <- strictToLazyST (noDuplicateST >>
+                (rc, n, obuf) <- strictToLazyST (noDuplicateST >>
                                                  runLzmaStream ls BS.empty action bUFSIZ)
+                when (n /= 0) $ error "decompressST: n was not zero"
                 case rc of
                   LzmaRetOK
                     | BS.null obuf -> next
