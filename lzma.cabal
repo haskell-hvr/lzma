@@ -1,6 +1,6 @@
 cabal-version:       >=1.10
 name:                lzma
-version:             0.0.0.4
+version:             0.0.1.0
 synopsis:            LZMA/XZ compression and decompression
 homepage:            https://github.com/hvr/lzma
 bug-reports:         https://github.com/hvr/lzma/issues
