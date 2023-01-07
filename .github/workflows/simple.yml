@@ -24,6 +24,10 @@ jobs:
           git config --global core.autocrlf false
           git config --global core.eol lf
 
+      - name: liblzma version
+        run: |
+          pkg-config liblzma --modversion || true
+
       - name: Checkout
         uses: actions/checkout@v3.0.2
 

@@ -34,6 +34,11 @@ description:
 extra-source-files:
   Changelog.md
 
+flag pkgconfig
+  description: Use @pkgconfig@ on unix system to find @liblzma@
+  manual: True
+  default: True
+
 source-repository head
   type:     git
   location: https://github.com/hvr/lzma.git
@@ -52,8 +57,11 @@ library
   if os(windows)
     build-depends:     lzma-clib
   else
-    includes:          lzma.h
-    extra-libraries:   lzma
+    if flag(pkgconfig)
+      pkgconfig-depends: liblzma >=5.2.2
+    else
+      includes:          lzma.h
+      extra-libraries:   lzma
 
   c-sources:           cbits/lzma_wrapper.c
 
