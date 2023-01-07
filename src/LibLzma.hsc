@@ -147,7 +147,7 @@ data CompressParams = CompressParams
     , compressLevelExtreme   :: !Bool  -- ^ 'CompressParams' field: Enable slower variant of the
                                        -- 'lzmaCompLevel' preset, see @xz(1)@
                                        -- man-page for details.
-    , compressThreads        :: !Int -- ^ Number of threads to use. It must be greater than zero..
+    , compressThreads        :: !Int -- ^ Number of threads to use. It must be greater than zero.
     } deriving (Eq,Show)
 
 -- | The default set of parameters for compression. This is typically
