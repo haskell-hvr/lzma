@@ -1,3 +1,7 @@
+## 0.0.1.0
+
+* Add `pkgconfig` package flag.
+
 ## 0.0.0.4
 
 * base-4.17 compatibility
