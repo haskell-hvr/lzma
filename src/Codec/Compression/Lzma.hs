@@ -43,6 +43,7 @@ module Codec.Compression.Lzma
     , compressIntegrityCheck
     , compressLevel
     , compressLevelExtreme
+    , compressThreads
 
     , IntegrityCheck(..)
     , CompressionLevel(..)

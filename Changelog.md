@@ -1,6 +1,7 @@
 ## 0.0.1.0
 
 * Add `pkgconfig` package flag.
+* add `compressThreads` parameter for multithreaded compression
 
 ## 0.0.0.4
 
